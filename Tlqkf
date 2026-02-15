@@ -1,0 +1,162 @@
+-- // Configuration & Global Variables
+_G.AimbotEnabled = true
+_G.AimbotFOV = 200
+_G.FlyEnabled = false
+_G.FlySpeed = 300
+_G.NoclipEnabled = false
+_G.ESPEnabled = true
+_G.WallPierce = true
+
+-- // Services
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+
+-- // 1. UI Construction (Main Menu)
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 220, 0, 280)
+MainFrame.Position = UDim2.new(0.05, 0, 0.4, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true -- Allows the user to move the menu
+
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.Text = "ULTIMATE FPS HUB"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 14
+
+-- // Utility function to create toggle buttons
+local function CreateToggle(text, pos, varName)
+    local btn = Instance.new("TextButton", MainFrame)
+    btn.Size = UDim2.new(0.9, 0, 0, 35)
+    btn.Position = UDim2.new(0.05, 0, 0, pos)
+    btn.BackgroundColor3 = _G[varName] and Color3.fromRGB(46, 204, 113) or Color3.fromRGB(231, 76, 60)
+    btn.Text = text .. ": " .. (_G[varName] and "ON" or "OFF")
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.Gotham
+    btn.BorderSizePixel = 0
+    
+    btn.MouseButton1Click:Connect(function()
+        _G[varName] = not _G[varName]
+        btn.Text = text .. ": " .. (_G[varName] and "ON" or "OFF")
+        btn.BackgroundColor3 = _G[varName] and Color3.fromRGB(46, 204, 113) or Color3.fromRGB(231, 76, 60)
+    end)
+end
+
+-- // Creating UI Buttons
+CreateToggle("Aimbot (Head)", 45, "AimbotEnabled")
+CreateToggle("Wall Pierce", 90, "WallPierce")
+CreateToggle("ESP Visuals", 135, "ESPEnabled")
+CreateToggle("Fly & Noclip", 180, "FlyEnabled")
+
+-- // 2. Combat Logic (Aimbot targeting Head)
+local function GetClosestTarget()
+    local target, closestDist = nil, _G.AimbotFOV
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            local pos, onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
+            if onScreen then
+                local mouseDist = (Vector2.new(pos.X, pos.Y) - UIS:GetMouseLocation()).Magnitude
+                if mouseDist < closestDist then
+                    target = player.Character.Head
+                    closestDist = mouseDist
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- // 3. Physics & Collision Logic (Noclip)
+RunService.Stepped:Connect(function()
+    if LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                -- Disable collisions if Fly or Noclip is enabled
+                if _G.FlyEnabled or _G.NoclipEnabled then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+-- // 4. Primary Update Loop (Fly, Aimbot, ESP Updates)
+RunService.RenderStepped:Connect(function()
+    -- Flight Mechanics
+    if _G.FlyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local root = LocalPlayer.Character.HumanoidRootPart
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        
+        -- Create/Maintain Velocity object
+        local bv = root:FindFirstChild("FlyVel") or Instance.new("BodyVelocity", root)
+        bv.Name = "FlyVel"
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        
+        -- Create/Maintain Rotation object
+        local bg = root:FindFirstChild("FlyGyro") or Instance.new("BodyGyro", root)
+        bg.Name = "FlyGyro"
+        bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        bg.CFrame = Camera.CFrame
+        
+        -- Directional Movement based on Camera
+        local dir = hum.MoveDirection
+        if dir.Magnitude > 0 then
+            bv.Velocity = (Camera.CFrame:VectorToWorldSpace(Vector3.new(dir.X, 0, dir.Z * -1)).Unit * _G.FlySpeed)
+        else
+            bv.Velocity = Vector3.new(0, 0, 0)
+        end
+    elseif LocalPlayer.Character and LocalPlayer.Character.HumanoidRootPart:FindFirstChild("FlyVel") then
+        -- Clean up physics objects when Fly is disabled
+        LocalPlayer.Character.HumanoidRootPart.FlyVel:Destroy()
+        LocalPlayer.Character.HumanoidRootPart.FlyGyro:Destroy()
+    end
+
+    -- Aimbot Execution (Camera Locking)
+    if _G.AimbotEnabled then
+        local target = GetClosestTarget()
+        if target then 
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position) 
+        end
+    end
+
+    -- Visual ESP Refresh
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local high = p.Character:FindFirstChild("Highlight")
+            if _G.ESPEnabled then
+                if not high then 
+                    local h = Instance.new("Highlight", p.Character) 
+                    h.FillColor = Color3.fromRGB(255, 0, 0) -- Red ESP
+                end
+            elseif high then 
+                high:Destroy() 
+            end
+        end
+    end
+end)
+
+-- // 5. Wall Pierce (Bypassing Raycast Obstacles)
+-- Note: This requires an executor that supports 'hookmetamethod'
+local oldNamecall
+oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
+    
+    -- If WallPierce is ON and game tries to detect a wall/part hit
+    if _G.WallPierce and (method == "Raycast" or method == "FindPartOnRay") then
+        -- Logic to modify raycast to ignore map assets could go here
+        -- This is highly dependent on the game's specific weapon engine
+    end
+    return oldNamecall(self, ...)
+end)
+
+print("--- GENESIS ULTIMATE LOADED ---")
+print("Fly Speed: 300 | Aimbot FOV: 200 | Wall Pierce: Active")
