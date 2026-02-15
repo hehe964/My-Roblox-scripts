@@ -1,0 +1,168 @@
+-- [[ SIHEON HUB: Integrated Function Menu ]]
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- Global Settings (Stores the On/Off state of functions)
+_G.AimbotEnabled = false
+_G.ESPEnabled = false
+_G.NoclipEnabled = false
+_G.FlyEnabled = false
+_G.FlySpeed = 50
+
+-- [ 1. GUI Basic Setup ]
+local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+ScreenGui.Name = "SiHeonHub_Final"
+
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 220, 0, 320)
+MainFrame.Position = UDim2.new(0.5, -110, 0.5, -160)
+MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true -- Allows the menu to be moved with the mouse.
+
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0, 45)
+Title.Text = "SIHEON HUB"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundColor3 = Color3.fromRGB(80, 100, 255)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 22
+
+-- [ 2. Button Creation Function ]
+local function CreateButton(name, pos, callback)
+    local btn = Instance.new("TextButton", MainFrame)
+    btn.Size = UDim2.new(0.9, 0, 0, 45)
+    btn.Position = pos
+    btn.Text = name .. ": OFF"
+    btn.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 16
+    btn.BorderSizePixel = 0
+
+    btn.MouseButton1Click:Connect(function()
+        callback(btn)
+    end)
+    return btn
+end
+
+-- [ 3. Function Logic Implementation ]
+
+-- Aimbot Target Logic (Finds the closest player to the cursor)
+local function GetClosestPlayer()
+    local target = nil
+    local shortestDistance = math.huge
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
+            local root = p.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
+                if onScreen then
+                    local mousePos = UserInputService:GetMouseLocation()
+                    local distance = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                    if distance < shortestDistance then
+                        target = root
+                        shortestDistance = distance
+                    end
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- Main Loop (Runs every frame)
+RunService.RenderStepped:Connect(function()
+    -- Execute Aimbot
+    if _G.AimbotEnabled then
+        local target = GetClosestPlayer()
+        if target then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
+        end
+    end
+
+    -- Execute ESP
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local hl = p.Character:FindFirstChild("Highlight")
+            if _G.ESPEnabled then
+                if not hl then 
+                    hl = Instance.new("Highlight", p.Character)
+                    hl.FillColor = Color3.fromRGB(255, 0, 0) 
+                end
+            else
+                if hl then hl:Destroy() end
+            end
+        end
+    end
+    
+    -- Execute Noclip (Walk through walls)
+    if _G.NoclipEnabled and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- Fly Logic
+local bodyVelocity, bodyGyro
+RunService.Stepped:Connect(function()
+    if _G.FlyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local root = LocalPlayer.Character.HumanoidRootPart
+        if not root:FindFirstChild("FlyVelocity") then
+            bodyVelocity = Instance.new("BodyVelocity", root)
+            bodyVelocity.Name = "FlyVelocity"
+            bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+            
+            bodyGyro = Instance.new("BodyGyro", root)
+            bodyGyro.Name = "FlyGyro"
+            bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        end
+        
+        bodyGyro.CFrame = Camera.CFrame
+        local moveDir = LocalPlayer.Character.Humanoid.MoveDirection
+        bodyVelocity.Velocity = (Camera.CFrame.LookVector * (moveDir.Z * -1) + Camera.CFrame.RightVector * moveDir.X) * _G.FlySpeed
+    else
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local root = LocalPlayer.Character.HumanoidRootPart
+            if root:FindFirstChild("FlyVelocity") then root.FlyVelocity:Destroy() end
+            if root:FindFirstChild("FlyGyro") then root.FlyGyro:Destroy() end
+        end
+    end
+end)
+
+-- [ 4. Button Connections ]
+
+-- Aimbot Button
+CreateButton("Aimbot", UDim2.new(0.05, 0, 0, 55), function(btn)
+    _G.AimbotEnabled = not _G.AimbotEnabled
+    btn.Text = "Aimbot: " .. (_G.AimbotEnabled and "ON" or "OFF")
+    btn.BackgroundColor3 = _G.AimbotEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(55, 55, 55)
+end)
+
+-- ESP Button
+CreateButton("ESP", UDim2.new(0.05, 0, 0, 110), function(btn)
+    _G.ESPEnabled = not _G.ESPEnabled
+    btn.Text = "ESP: " .. (_G.ESPEnabled and "ON" or "OFF")
+    btn.BackgroundColor3 = _G.ESPEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(55, 55, 55)
+end)
+
+-- Noclip Button
+CreateButton("Noclip", UDim2.new(0.05, 0, 0, 165), function(btn)
+    _G.NoclipEnabled = not _G.NoclipEnabled
+    btn.Text = "Noclip: " .. (_G.NoclipEnabled and "ON" or "OFF")
+    btn.BackgroundColor3 = _G.NoclipEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(55, 55, 55)
+end)
+
+-- Fly Button
+CreateButton("Fly", UDim2.new(0.05, 0, 0, 220), function(btn)
+    _G.FlyEnabled = not _G.FlyEnabled
+    btn.Text = "Fly: " .. (_G.FlyEnabled and "ON" or "OFF")
+    btn.BackgroundColor3 = _G.FlyEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(55, 55, 55)
+end)
