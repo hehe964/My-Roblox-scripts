@@ -1,0 +1,94 @@
+-- [[ RIVALS INTERNAL GUI FRAMEWORK ]]
+-- Author: Gemini AI Collaboration
+-- Description: Mobile-friendly UI for Combat, Movement, and Visuals.
+
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local Layout = Instance.new("UIListLayout")
+
+-- Initialize ScreenGui
+ScreenGui.Name = "RivalsMenu"
+ScreenGui.Parent = game:GetService("CoreGui") -- Hidden from regular player list
+ScreenGui.ResetOnSpawn = false
+
+-- Main Menu Frame
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Position = UDim2.new(0.05, 0, 0.2, 0)
+MainFrame.Size = UDim2.new(0, 200, 0, 320)
+MainFrame.Active = true
+MainFrame.Draggable = true -- Allows mobile users to move the UI
+
+-- Title Label
+Title.Parent = MainFrame
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "RIVALS HUB"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+
+-- Auto-layout for buttons
+Layout.Parent = MainFrame
+Layout.Padding = UDim.new(0, 5)
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- [[ FUNCTION: CREATE TOGGLE BUTTONS ]]
+local function CreateButton(name, callback)
+    local btn = Instance.new("TextButton")
+    local enabled = false
+    
+    btn.Parent = MainFrame
+    btn.Size = UDim2.new(1, -10, 0, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    btn.Text = name .. ": OFF"
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    
+    btn.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        if enabled then
+            btn.BackgroundColor3 = Color3.fromRGB(0, 170, 0) -- Green for ON
+            btn.Text = name .. ": ON"
+        else
+            btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60) -- Gray for OFF
+            btn.Text = name .. ": OFF"
+        end
+        callback(enabled)
+    end)
+end
+
+-- [[ FEATURES SETUP ]]
+
+-- 1. Aimbot POV 250
+CreateButton("Aimbot POV 250", function(state)
+    -- Logic: Lock mouse/camera to nearest target within 250 FOV
+    print("Aimbot POV 250 State:", state)
+end)
+
+-- 2. Silent Aim (Wall Penetration)
+CreateButton("Auto Wall Shot", function(state)
+    -- Logic: Bypass raycast obstruction checks
+    print("Wall Penetration State:", state)
+end)
+
+-- 3. Headshot Only
+CreateButton("Headshot Only", function(state)
+    -- Logic: Set target bone index to 'Head'
+    print("Target Lock: Head")
+end)
+
+-- 4. Noclip
+CreateButton("Noclip", function(state)
+    -- Logic: Set CanCollide to false for all Character parts
+    print("Noclip State:", state)
+end)
+
+-- 5. Directional Fly
+CreateButton("Dir Fly", function(state)
+    -- Logic: Update CFrame towards Camera.LookVector
+    print("Directional Fly State:", state)
+end)
+
+-- 6. ESP (Visuals)
+CreateButton("ESP Box", function(state)
+    --
