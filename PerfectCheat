@@ -1,0 +1,134 @@
+-- // Configuration & Global Variables
+_G.AimbotEnabled = true
+_G.AimbotFOV = 250
+_G.NoclipEnabled = false
+_G.ESPEnabled = true
+_G.WallPierce = true
+_G.AutoFire = true
+_G.MenuVisible = true
+
+-- // Services
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+
+-- // 1. UI Setup (Main Menu)
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 220, 0, 320)
+MainFrame.Position = UDim2.new(0.05, 0, 0.4, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "FPS ULTIMATE"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+Title.Font = Enum.Font.GothamBold
+
+-- // Close/Open Instruction Label
+local InfoLabel = Instance.new("TextLabel", MainFrame)
+InfoLabel.Size = UDim2.new(1, 0, 0, 20)
+InfoLabel.Position = UDim2.new(0, 0, 1, 0)
+InfoLabel.Text = "Press 'INSERT' to Toggle Menu"
+InfoLabel.BackgroundColor3 = Color3.new(0, 0, 0)
+InfoLabel.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+InfoLabel.TextSize = 10
+
+-- // Toggle Button Function
+local function CreateToggle(text, pos, varName)
+    local btn = Instance.new("TextButton", MainFrame)
+    btn.Size = UDim2.new(0.9, 0, 0, 35)
+    btn.Position = UDim2.new(0.05, 0, 0, pos)
+    btn.BackgroundColor3 = _G[varName] and Color3.fromRGB(46, 204, 113) or Color3.fromRGB(231, 76, 60)
+    btn.Text = text .. ": " .. (_G[varName] and "ON" or "OFF")
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.Gotham
+    
+    btn.MouseButton1Click:Connect(function()
+        _G[varName] = not _G[varName]
+        btn.Text = text .. ": " .. (_G[varName] and "ON" or "OFF")
+        btn.BackgroundColor3 = _G[varName] and Color3.fromRGB(46, 204, 113) or Color3.fromRGB(231, 76, 60)
+    end)
+end
+
+CreateToggle("Aimbot (Head)", 50, "AimbotEnabled")
+CreateToggle("Wall Pierce", 95, "WallPierce")
+CreateToggle("Auto Fire", 140, "AutoFire")
+CreateToggle("ESP Visuals", 185, "ESPEnabled")
+CreateToggle("Noclip", 230, "NoclipEnabled")
+
+-- // 2. UI Visibility Toggle (INSERT Key)
+UIS.InputBegan:Connect(function(input, processed)
+    if input.KeyCode == Enum.KeyCode.Insert then
+        _G.MenuVisible = not _G.MenuVisible
+        MainFrame.Visible = _G.MenuVisible
+    end
+end)
+
+-- // 3. Combat Logic (Targeting & Wall Pierce)
+local function GetTarget()
+    local target, closestDist = nil, _G.AimbotFOV
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            local pos, onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
+            if onScreen then
+                local mouseDist = (Vector2.new(pos.X, pos.Y) - UIS:GetMouseLocation()).Magnitude
+                if mouseDist < closestDist then
+                    target = player.Character.Head
+                    closestDist = mouseDist
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- // 4. Main Update Loop
+RunService.RenderStepped:Connect(function()
+    -- Noclip Logic
+    if _G.NoclipEnabled and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
+        end
+    end
+
+    -- Aimbot & AutoFire
+    if _G.AimbotEnabled then
+        local target = GetTarget()
+        if target then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
+            if _G.AutoFire then
+                -- Simulate Mouse Click (Basic AutoFire)
+                mouse1click() 
+            end
+        end
+    end
+
+    -- ESP Refresh
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local high = p.Character:FindFirstChild("Highlight")
+            if _G.ESPEnabled then
+                if not high then Instance.new("Highlight", p.Character) end
+            elseif high then high:Destroy() end
+        end
+    end
+end)
+
+-- // 5. Wall Pierce Raycast Override (Requires Hook Support)
+local oldNamecall
+oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    if _G.WallPierce and (method == "Raycast") then
+        -- Logic to bypass wall detection can be added here
+    end
+    return oldNamecall(self, ...)
+end)
+
+print("Script Loaded - Press INSERT to toggle Menu")
