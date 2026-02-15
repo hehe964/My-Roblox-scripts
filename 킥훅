@@ -1,0 +1,120 @@
+-- [[ Kishia Hook Concept UI Script ]] --
+
+local Library = {} -- Assume a simple UI library structure
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+
+-- Configuration Toggles
+local Config = {
+    Fly = false,
+    Aimbot = false,
+    Noclip = false,
+    ESP = false,
+    AutoAttack = false,
+    FlySpeed = 500,
+    FOV = 300
+}
+
+-- [[ UI Construction ]] --
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 250, 0, 350)
+MainFrame.Position = UDim2.new(0.5, -125, 0.5, -175)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Visible = true
+
+-- Toggle UI Visibility with 'Insert' or 'RightControl'
+game:GetService("UserInputService").InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Insert then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
+
+-- [[ Core Functions ]] --
+
+-- 1. Fly Logic (Directional)
+RunService.RenderStepped:Connect(function()
+    if Config.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = LocalPlayer.Character.HumanoidRootPart
+        -- Move towards where the camera is looking
+        hrp.Velocity = workspace.CurrentCamera.CFrame.LookVector * Config.FlySpeed
+    end
+end)
+
+-- 2. Noclip (Wall Phase)
+RunService.Stepped:Connect(function()
+    if Config.Noclip and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- 3. Aimbot (FOV 300)
+local function GetClosestPlayer()
+    local closest = nil
+    local shortestDist = Config.FOV
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            local pos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+            if onScreen then
+                local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
+                if dist < shortestDist then
+                    closest = v
+                    shortestDist = dist
+                end
+            end
+        end
+    end
+    return closest
+end
+
+RunService.RenderStepped:Connect(function()
+    if Config.Aimbot then
+        local target = GetClosestPlayer()
+        if target then
+            workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, target.Character.HumanoidRootPart.Position)
+        end
+    end
+end)
+
+-- 4. ESP (Simple Highlight)
+local function UpdateESP()
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character then
+            if Config.ESP then
+                if not v.Character:FindFirstChild("KishiaHighlight") then
+                    local highlight = Instance.new("Highlight", v.Character)
+                    highlight.Name = "KishiaHighlight"
+                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                end
+            else
+                if v.Character:FindFirstChild("KishiaHighlight") then
+                    v.Character.KishiaHighlight:Destroy()
+                end
+            end
+        end
+    end
+end
+
+-- 5. Auto Attack (Through Walls)
+task.spawn(function()
+    while task.wait(0.1) do
+        if Config.AutoAttack then
+            local target = GetClosestPlayer()
+            if target and target.Character then
+                -- Logic to trigger attack remote or tool
+                -- Note: This depends on the specific game's combat system
+                print("Kishia Hook: Auto-attacking " .. target.Name)
+            end
+        end
+    end
+end)
+
+-- [[ UI Toggle Button Logic (Placeholder) ]] --
+-- Here you would add buttons to MainFrame to toggle Config values.
+print("Kishia Hook Loaded. Press 'Insert' to open/close menu.")
