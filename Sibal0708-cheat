@@ -1,0 +1,89 @@
+-- Improved Flight Logic (English Version)
+
+local bodyVelocity, bodyGyro
+
+local FLY_SPEED = 300 -- Set this higher if you want to go even faster!
+
+
+
+RunService.Stepped:Connect(function()
+
+    if _G.FlyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+
+        local root = LocalPlayer.Character.HumanoidRootPart
+
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+
+        
+
+        -- Create physics objects if they don't exist
+
+        if not root:FindFirstChild("FlyVelocity") then
+
+            bodyVelocity = Instance.new("BodyVelocity")
+
+            bodyVelocity.Name = "FlyVelocity"
+
+            bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+
+            bodyVelocity.Parent = root
+
+            
+
+            bodyGyro = Instance.new("BodyGyro")
+
+            bodyGyro.Name = "FlyGyro"
+
+            bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+
+            bodyGyro.D = 500 -- Smoothing factor
+
+            bodyGyro.Parent = root
+
+        end
+
+        
+
+        -- Match character rotation with Camera for intuitive control
+
+        bodyGyro.CFrame = Camera.CFrame
+
+        
+
+        -- Calculate Movement Direction
+
+        local moveDirection = hum.MoveDirection
+
+        if moveDirection.Magnitude > 0 then
+
+            -- Moving: Apply velocity based on Camera orientation
+
+            local direction = (Camera.CFrame.LookVector * (moveDirection.Z * -1) + Camera.CFrame.RightVector * moveDirection.X).Unit
+
+            bodyVelocity.Velocity = direction * FLY_SPEED
+
+        else
+
+            -- Static: Stay in place (prevent drifting)
+
+            bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+
+        end
+
+    else
+
+        -- Clean up physics objects when disabled
+
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+
+            local root = LocalPlayer.Character.HumanoidRootPart
+
+            if root:FindFirstChild("FlyVelocity") then root.FlyVelocity:Destroy() end
+
+            if root:FindFirstChild("FlyGyro") then root.FlyGyro:Destroy() end
+
+        end
+
+    end
+
+end)
