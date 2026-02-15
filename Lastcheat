@@ -1,0 +1,65 @@
+-- // Configuration
+_G.FlyEnabled = true
+_G.FlySpeed = 500
+_G.NoclipEnabled = true
+_G.AimbotEnabled = true
+_G.AimbotFOV = 300
+_G.ESPEnabled = true -- Toggle this to true/false to turn ESP on/off
+
+-- // Services
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- // Simple ESP Toggle Function
+local function UpdateESP()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local highlight = player.Character:FindFirstChild("ESPHighlight")
+            if _G.ESPEnabled then
+                if not highlight then
+                    highlight = Instance.new("Highlight")
+                    highlight.Name = "ESPHighlight"
+                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    highlight.Parent = player.Character
+                end
+            else
+                if highlight then highlight:Destroy() end
+            end
+        end
+    end
+end
+
+-- // Main Loop (Fly, Noclip, ESP Update)
+RunService.Stepped:Connect(function()
+    UpdateESP() -- Updates ESP state every frame
+    
+    if _G.FlyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local root = LocalPlayer.Character.HumanoidRootPart
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        
+        -- Noclip Logic
+        if _G.NoclipEnabled then
+            for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
+            end
+        end
+
+        -- Fly Physics
+        local bv = root:FindFirstChild("FlyVelocity") or Instance.new("BodyVelocity", root)
+        bv.Name = "FlyVelocity"
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        
+        local bg = root:FindFirstChild("FlyGyro") or Instance.new("BodyGyro", root)
+        bg.Name = "FlyGyro"
+        bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        bg.CFrame = Camera.CFrame
+        
+        -- Movement Speed (500)
+        local moveDir = hum.MoveDirection
+        if moveDir.Magnitude > 0 then
+            bv.Velocity = (Camera.CFrame.LookVector * (moveDir.Z * -1) + Camera.CFrame.RightVector * moveDir.X).Unit * _G.FlySpeed
+        else
+            bv
