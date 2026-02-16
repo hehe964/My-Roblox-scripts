@@ -1,0 +1,110 @@
+-- [[ KICIAHOOK V2 : RIVALS PREMIUM MOBILE ]]
+-- Optimized for Delta, Vega X, and Codex
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- [[ PREMIUM CONFIGURATION ]]
+getgenv().KiciaConfig = {
+    Enabled = true,
+    SilentAim = true,
+    MagicBullet = true,  -- Bullets curve 100% to target
+    Wallbang = true,     -- Hits through all obstacles
+    TargetPart = "Head", -- Always Headshot
+    FieldOfView = 200,   -- FOV Range
+    HitChance = 100,     -- 100% Accuracy
+    ShowFOV = true,
+    ESP = {
+        Enabled = true,
+        Boxes = true,
+        Names = true,
+        Distance = true
+    }
+}
+
+-- [1] FOV Rendering (Mobile Optimized)
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 1
+FOVCircle.Color = Color3.fromRGB(0, 255, 255)
+FOVCircle.Filled = false
+FOVCircle.Transparency = 0.5
+
+-- [2] Advanced Rivals Target Selector
+local function GetClosestTarget()
+    local target, shortestDist = nil, getgenv().KiciaConfig.FieldOfView
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(getgenv().KiciaConfig.TargetPart) then
+            local part = player.Character[getgenv().KiciaConfig.TargetPart]
+            local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
+            local magnitude = (Vector2.new(pos.X, pos.Y) - UserInputService:GetMouseLocation()).Magnitude
+            
+            if magnitude < shortestDist then
+                -- Wallbang Check: if Wallbang is true, bypass visibility
+                if getgenv().KiciaConfig.Wallbang or onScreen then
+                    target = part
+                    shortestDist = magnitude
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- [3] Magic Bullet Logic (Metamethod Hooking)
+-- This is the core "Premium" feature that redirects bullets
+local OldNamecall
+OldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
+
+    if not checkcaller() and getgenv().KiciaConfig.SilentAim and method == "Raycast" then
+        local target = GetClosestTarget()
+        if target and math.random(1, 100) <= getgenv().KiciaConfig.HitChance then
+            -- Magic Bullet: Redirect the Raycast origin/direction to the target's Head
+            args[2] = (target.Position - args[1]).Unit * 1000
+            return OldNamecall(self, unpack(args))
+        end
+    end
+    return OldNamecall(self, ...)
+end)
+
+-- [4] Premium ESP: Highlight Style (Rivals Meta)
+local function ApplyESP(player)
+    local function Create()
+        if player.Character then
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "KiciaHighlight"
+            highlight.Parent = player.Character
+            highlight.FillColor = Color3.fromRGB(255, 50, 50)
+            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+            highlight.FillAlpha = 0.5
+            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        end
+    end
+    player.CharacterAdded:Connect(Create)
+    Create()
+end
+
+-- [5] Update Loop
+RunService.RenderStepped:Connect(function()
+    if getgenv().KiciaConfig.ShowFOV then
+        FOVCircle.Visible = true
+        FOVCircle.Radius = getgenv().KiciaConfig.FieldOfView
+        FOVCircle.Position = UserInputService:GetMouseLocation()
+    else
+        FOVCircle.Visible = false
+    end
+end)
+
+-- Initialize
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then ApplyESP(player) end
+end
+Players.PlayerAdded:Connect(ApplyESP)
+
+print("--- KICIAHOOK V2 PREMIUM LOADED ---")
+print("Target: Rivals (Mobile)")
