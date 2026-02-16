@@ -1,0 +1,137 @@
+-- [[ KISHIA HOOK PREMIUM - MODIFIED BY GEMINI ]] --
+-- GitHub: Place this in your repository (e.g., kishia-hook.lua)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- [[ CONFIGURATION ]] --
+local Config = {
+    Aimbot = true,
+    Noclip = false,
+    ESP = true,
+    AutoAttack = false,
+    FOV = 300
+}
+
+-- [[ UI CONSTRUCT ]] --
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Name = "KishiaPremium_UI"
+MainFrame.Size = UDim2.new(0, 220, 0, 250)
+MainFrame.Position = UDim2.new(0.5, -110, 0.5, -125)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Visible = true -- Shows immediately
+
+-- Corner Rounding
+local Corner = Instance.new("UICorner", MainFrame)
+Corner.CornerRadius = UDim.new(0, 8)
+
+-- Title
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "KISHIA HOOK PREMIUM"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 16
+
+-- Toggle Button Creator Function
+local function CreateToggle(name, configPath, pos)
+    local btn = Instance.new("TextButton", MainFrame)
+    btn.Size = UDim2.new(0.9, 0, 0, 35)
+    btn.Position = UDim2.new(0.05, 0, 0, pos)
+    btn.BackgroundColor3 = Config[configPath] and Color3.fromRGB(60, 180, 100) or Color3.fromRGB(180, 60, 60)
+    btn.Text = name .. ": " .. (Config[configPath] and "ON" or "OFF")
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.SourceSans
+    btn.TextSize = 14
+    
+    local btnCorner = Instance.new("UICorner", btn)
+    
+    btn.MouseButton1Click:Connect(function()
+        Config[configPath] = not Config[configPath]
+        btn.Text = name .. ": " .. (Config[configPath] and "ON" or "OFF")
+        btn.BackgroundColor3 = Config[configPath] and Color3.fromRGB(60, 180, 100) or Color3.fromRGB(180, 60, 60)
+    end)
+end
+
+-- Create Menu Buttons (Fly is REMOVED)
+CreateToggle("Aimbot", "Aimbot", 50)
+CreateToggle("ESP", "ESP", 95)
+CreateToggle("Noclip", "Noclip", 140)
+CreateToggle("Auto Attack", "AutoAttack", 185)
+
+-- Toggle Key (Insert)
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Insert then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
+
+-- [[ CORE LOGIC ]] --
+
+-- 1. Noclip Logic
+RunService.Stepped:Connect(function()
+    if Config.Noclip and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- 2. Aimbot Logic
+local function GetClosest()
+    local target = nil
+    local maxDist = Config.FOV
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            local pos, onScreen = Camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+            if onScreen then
+                local mousePos = UserInputService:GetMouseLocation()
+                local dist = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                if dist < maxDist then
+                    target = v
+                    maxDist = dist
+                end
+            end
+        end
+    end
+    return target
+end
+
+RunService.RenderStepped:Connect(function()
+    if Config.Aimbot then
+        local target = GetClosest()
+        if target then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.HumanoidRootPart.Position)
+        end
+    end
+end)
+
+-- 3. ESP Logic
+RunService.RenderStepped:Connect(function()
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character then
+            local highlight = v.Character:FindFirstChild("KishiaESP")
+            if Config.ESP then
+                if not highlight then
+                    highlight = Instance.new("Highlight", v.Character)
+                    highlight.Name = "KishiaESP"
+                    highlight.FillColor = Color3.fromRGB(255, 0, 255)
+                end
+            else
+                if highlight then highlight:Destroy() end
+            end
+        end
+    end
+end)
+
+print("Kishia Hook Premium - Modified Version Loaded")
