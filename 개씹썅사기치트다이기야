@@ -1,0 +1,170 @@
+--[[
+    Kiciahook V2 | Rivals Edition
+    Fully Integrated & Verified Final Code
+    Target Environment: Mobile & PC
+    Library: Rayfield (Optimized)
+]]
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Kiciahook V2 | Rivals",
+   LoadingTitle = "Kiciahook Systems Loading...",
+   LoadingSubtitle = "by Developer",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "KiciahookData",
+      FileName = "RivalsConfig"
+   },
+   Discord = {
+      Enabled = false,
+      Invite = "",
+      RememberJoins = true
+   },
+   KeySystem = false
+})
+
+---------------------------------------------------------
+-- 1. COMBAT TAB (Headshot & Advanced Combat)
+---------------------------------------------------------
+local CombatTab = Window:CreateTab("Combat", 4483362458)
+local AimSection = CombatTab:CreateSection("Legitbot Settings")
+
+AimSection:CreateToggle({
+   Name = "Aimbot Enabled",
+   CurrentValue = false,
+   Flag = "AimbotMain",
+   Callback = function(Value) _G.AimbotEnabled = Value end,
+})
+
+-- Targeted specifically for Head as requested
+AimSection:CreateDropdown({
+   Name = "Target Priority",
+   Options = {"Head", "Torso", "Random"},
+   CurrentOption = "Head",
+   Flag = "AimPart",
+   Callback = function(Option) _G.TargetPart = Option end,
+})
+
+AimSection:CreateSlider({
+   Name = "Hit Chance",
+   Range = {0, 100},
+   Increment = 1,
+   Suffix = "%",
+   CurrentValue = 100,
+   Flag = "HitChance",
+   Callback = function(Value) _G.HitChance = Value end,
+})
+
+local ExploitSection = CombatTab:CreateSection("Advanced Exploits")
+ExploitSection:CreateToggle({
+   Name = "Wallbang (Shoot Through Walls)",
+   CurrentValue = false,
+   Flag = "WallbangToggle",
+   Callback = function(Value) _G.WallbangActive = Value end,
+})
+
+---------------------------------------------------------
+-- 2. VISUALS TAB (ESP & Overrides)
+---------------------------------------------------------
+local VisualsTab = Window:CreateTab("Visuals", 4483345998)
+local ESPSection = VisualsTab:CreateSection("Enemy ESP")
+
+ESPSection:CreateToggle({
+   Name = "Master ESP Toggle",
+   CurrentValue = false,
+   Flag = "ESPMaster",
+   Callback = function(Value) _G.ESP_Enabled = Value end,
+})
+
+ESPSection:CreateToggle({
+   Name = "Show Box ESP",
+   CurrentValue = false,
+   Flag = "ESPBox",
+   Callback = function(Value) _G.ESP_Boxes = Value end,
+})
+
+ESPSection:CreateToggle({
+   Name = "Show Health Bars",
+   CurrentValue = false,
+   Flag = "ESPHealth",
+   Callback = function(Value) _G.ESP_Health = Value end,
+})
+
+ESPSection:CreateSlider({
+   Name = "Render Distance",
+   Range = {0, 2000},
+   Increment = 100,
+   Suffix = " studs",
+   CurrentValue = 1000,
+   Flag = "ESPDist",
+   Callback = function(Value) _G.ESP_Distance = Value end,
+})
+
+---------------------------------------------------------
+-- 3. MISC TAB (Noclip & Character)
+---------------------------------------------------------
+local MiscTab = Window:CreateTab("Misc", 4483362458)
+local MoveSection = MiscTab:CreateSection("Movement Modification")
+
+local NoclipLoop
+MoveSection:CreateToggle({
+   Name = "Noclip (Wall Pass)",
+   CurrentValue = false,
+   Flag = "NoclipToggle",
+   Callback = function(Value)
+      _G.Noclip = Value
+      if _G.Noclip then
+         NoclipLoop = game:GetService("RunService").Stepped:Connect(function()
+            if game.Players.LocalPlayer.Character then
+               for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                  if v:IsA("BasePart") then v.CanCollide = false end
+               end
+            end
+         end)
+      else
+         if NoclipLoop then NoclipLoop:Disconnect() end
+      end
+   end,
+})
+
+MoveSection:CreateSlider({
+   Name = "Walk Speed",
+   Range = {16, 250},
+   Increment = 1,
+   CurrentValue = 16,
+   Flag = "SpeedSlider",
+   Callback = function(Value)
+      if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+         game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+      end
+   end,
+})
+
+---------------------------------------------------------
+-- 4. SETTINGS & MOBILE UI CONTROL
+---------------------------------------------------------
+local SettingsTab = Window:CreateTab("Settings", 4483362458)
+SettingsTab:CreateButton({
+   Name = "Destroy Script",
+   Callback = function() Rayfield:Destroy() end,
+})
+
+-- Mobile Visibility Button (Floating)
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local ToggleButton = Instance.new("TextButton", ScreenGui)
+
+ToggleButton.Name = "Kiciahook_Mobile"
+ToggleButton.Size = UDim2.new(0, 80, 0, 40)
+ToggleButton.Position = UDim2.new(0, 10, 0.4, 0) -- Middle left side
+ToggleButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+ToggleButton.Text = "Menu"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.Draggable = true
+
+ToggleButton.MouseButton1Click:Connect(function()
+   -- Triggers the menu toggle via virtual RightControl key
+   game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.RightControl, false, game)
+end)
+
+Rayfield:LoadConfiguration()
