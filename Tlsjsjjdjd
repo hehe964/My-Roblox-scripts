@@ -1,0 +1,86 @@
+-- [[ KICIAHOOK V2 ULTIMATE PREMIUM ]]
+-- TARGET: RIVALS (ROBLOX)
+-- PLATFORM: MOBILE (DELTA, VEGA X, CODEX)
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- [[ Configuration ]]
+getgenv().KiciaConfig = {
+    SilentAim = false,
+    Wallbang = false,
+    TargetPart = "Head",
+    HitChance = 100,
+    FOV = 150,
+    ShowFOV = true,
+    ESPEnabled = false,
+    ESPColor = Color3.fromRGB(255, 0, 0)
+}
+
+-- [[ Window Setup ]]
+local Window = Rayfield:CreateWindow({
+   Name = "Kiciahook V2 | Rivals Premium",
+   LoadingTitle = "Initializing Kicia System...",
+   LoadingSubtitle = "Mobile Edition",
+   ConfigurationSaving = { Enabled = false }
+})
+
+-- [[ Tabs ]]
+local CombatTab = Window:CreateTab("Combat", 4483362458)
+local VisualsTab = Window:CreateTab("Visuals", 4483362458)
+
+-- [[ Combat Elements ]]
+CombatTab:CreateToggle({
+   Name = "Silent Aim (Magic Bullet)",
+   CurrentValue = false,
+   Callback = function(Value) getgenv().KiciaConfig.SilentAim = Value end,
+})
+
+CombatTab:CreateToggle({
+   Name = "Wallbang (Shoot Through Walls)",
+   CurrentValue = false,
+   Callback = function(Value) getgenv().KiciaConfig.Wallbang = Value end,
+})
+
+CombatTab:CreateSlider({
+   Name = "FOV Radius",
+   Range = {0, 600},
+   Increment = 10,
+   Suffix = "px",
+   CurrentValue = 150,
+   Callback = function(Value) getgenv().KiciaConfig.FOV = Value end,
+})
+
+-- [[ Visuals Elements ]]
+VisualsTab:CreateToggle({
+   Name = "ESP (Highlights)",
+   CurrentValue = false,
+   Callback = function(Value) getgenv().KiciaConfig.ESPEnabled = Value end,
+})
+
+VisualsTab:CreateToggle({
+   Name = "Show FOV Circle",
+   CurrentValue = true,
+   Callback = function(Value) getgenv().KiciaConfig.ShowFOV = Value end,
+})
+
+-- [[ Backend Logic ]]
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+-- FOV Circle Rendering
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 1
+FOVCircle.Color = Color3.fromRGB(0, 255, 255)
+FOVCircle.Filled = false
+FOVCircle.Transparency = 0.5
+
+-- Target Selector
+local function GetClosestTarget()
+    local target, shortestDist = nil, getgenv().KiciaConfig.FOV
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild(getgenv().KiciaConfig.TargetPart) then
+            local part = p.Character[getgenv().KiciaConfig.TargetPart]
+            local pos
