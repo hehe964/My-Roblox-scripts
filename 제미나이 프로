@@ -1,0 +1,94 @@
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Vim = game:GetService("VirtualInputManager") -- More stable for mobile
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
+
+local Settings = {
+    AimbotEnabled = true,
+    TargetPart = "Head",
+    TriggerbotEnabled = true,
+    WallCheck = false, 
+    ESPEnabled = true,
+    FOV = 360
+}
+
+-- [1] Fixed ESP with Loading Check
+local function CreateESP(player)
+    local function Apply(char)
+        if not char then return end
+        -- Ensure the character is loaded
+        char:WaitForChild("HumanoidRootPart", 5)
+        
+        if Settings.ESPEnabled and not char:FindFirstChild("KiciaESP") then
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "KiciaESP"
+            highlight.Parent = char
+            highlight.FillColor = Color3.fromRGB(255, 0, 0)
+            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- See through walls
+        end
+    end
+    
+    player.CharacterAdded:Connect(Apply)
+    if player.Character then Apply(player.Character) end
+end
+
+-- [2] Optimized Target Logic
+local function GetClosestPlayer()
+    local closestTarget = nil
+    local shortestDistance = math.huge
+
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(Settings.TargetPart) then
+            local targetPart = v.Character[Settings.TargetPart]
+            local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+            
+            -- Wall Penetration Logic: Bypass 'onScreen' if WallCheck is false
+            if not Settings.WallCheck or onScreen then
+                local mousePos = Vector2.new(Mouse.X, Mouse.Y)
+                local targetPos = Vector2.new(screenPos.X, screenPos.Y)
+                local distance = (mousePos - targetPos).Magnitude
+                
+                if distance < shortestDistance then
+                    closestTarget = targetPart
+                    shortestDistance = distance
+                end
+            end
+        end
+    end
+    return closestTarget
+end
+
+-- [3] Improved Main Loop
+RunService.RenderStepped:Connect(function()
+    -- Triggerbot using VirtualInputManager for better compatibility
+    if Settings.TriggerbotEnabled and Mouse.Target then
+        local character = Mouse.Target:FindFirstAncestorOfClass("Model")
+        if character and Players:GetPlayerFromCharacter(character) then
+            -- Simulate Touch/Click
+            Vim:SendMouseButtonEvent(Mouse.X, Mouse.Y, 0, true, game, 1)
+            task.wait(0.05)
+            Vim:SendMouseButtonEvent(Mouse.X, Mouse.Y, 0, false, game, 1)
+        end
+    end
+    
+    if Settings.AimbotEnabled then
+        local target = GetClosestPlayer()
+        if target then
+            -- For a real 'Silent Aim' (Wallbang), you need to hook the game's fire Remote
+            -- This code only moves the camera smoothly
+            local targetLook = CFrame.new(Camera.CFrame.Position, target.Position)
+            Camera.CFrame = Camera.CFrame:Lerp(targetLook, 0.2) -- Smooth tracking
+        end
+    end
+end)
+
+-- Initialize
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then CreateESP(player) end
+end
+Players.PlayerAdded:Connect(CreateESP)
+
