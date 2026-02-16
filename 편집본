@@ -1,0 +1,73 @@
+-- [[ KICIAHOOK V2 | RIVALS DEDICATED SOURCE ]] --
+-- Features: Combat (Legit/Silent/Trigger/Rage), Visuals, Misc, Settings
+
+local Kicia_V2 = {
+    -- [COMBAT MODULE CONFIGURATION]
+    Combat = {
+        Legit = {Enabled = false, FOV = 100, Speed = 5, Smooth = 5},
+        Silent = {Enabled = false, HitChance = 100, Target = "Head", VisibleCheck = true}, --
+        Trigger = {Enabled = false, Delay = 4, HeadOnly = true}, --
+        Rage = {Enabled = false, AntiAim = false, Yaw = "Stutter Spin"} --
+    },
+    
+    -- [VISUALS & RENDERING CONFIGURATION]
+    Visuals = {
+        ESP = {Enabled = false, Box = true, Health = true, Name = true}, --
+        World = {Brightness = 100, Fog = false, Shadows = true}, --
+        Player = {ThirdPerson = false, FOV = 120, ViewmodelOffset = true} --
+    },
+    
+    -- [MISC & CHARACTER CONFIGURATION]
+    Misc = {
+        WalkSpeed = 149, --
+        JumpPower = 150, --
+        Fly = false,
+        NoRecoil = true, --
+        RapidFire = true --
+    }
+}
+
+-- [[ UI INITIALIZATION ]] --
+local Library = {}
+
+function Library:InitMenu()
+    -- Main Window Setup (Reference: Kiciahook V2 | Rivals)
+    local Screen = Instance.new("ScreenGui", game:GetService("CoreGui"))
+    local MainFrame = Instance.new("Frame", Screen)
+    
+    -- Tab System Setup
+    local TabContainer = Instance.new("Frame", MainFrame)
+    local ContentArea = Instance.new("ScrollingFrame", MainFrame)
+    
+    -- [[ INTERFACE TOGGLE LOGIC ]] --
+    -- Allows mobile users to open/close menu via floating button
+    local OpenButton = Instance.new("TextButton", Screen)
+    OpenButton.MouseButton1Click:Connect(function()
+        MainFrame.Visible = not MainFrame.Visible
+    end)
+end
+
+-- [[ CORE EXECUTION ENGINE ]] --
+game:GetService("RunService").RenderStepped:Connect(function()
+    -- 1. Silent Aim & Target Acquisition Logic
+    if Kicia_V2.Combat.Silent.Enabled then
+        -- Handle Silent Aim: Force CFrame toward target Head bone
+    end
+    
+    -- 2. Character Physics Modification
+    if game.Players.LocalPlayer.Character then
+        local Humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+        if Humanoid then
+            Humanoid.WalkSpeed = Kicia_V2.Misc.WalkSpeed -- Apply enhanced speed
+        end
+    end
+    
+    -- 3. Visual Overrides (ESP/World)
+    if Kicia_V2.Visuals.World.Brightness ~= 100 then
+        -- Lighting manipulation for 'World' tab settings
+    end
+end)
+
+-- [[ NOTIFICATION SYSTEM ]] --
+print("Kiciahook V2: English Documentation Loaded.")
+print("Current Build: Rivals Private Edition")
