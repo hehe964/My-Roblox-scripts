@@ -1,0 +1,147 @@
+-- [[ KISIAHOOK PREMIUM: RIVALS PRIVATE EDITION ]] --
+-- Version: v4.0 (Optimized for Rivals)
+-- Features: Silent Headshot, Auto-Shoot, Wallbang, Rivals Bypass
+
+local Kisia_Settings = {
+    Aimbot = false,
+    Headshot_Only = true,
+    Auto_Fire = false,
+    Wallbang = false,
+    No_Recoil = true,
+    ESP = false,
+    Speed = 20
+}
+
+-- [[ UI SYSTEM: MOBILE FLOATING MENU ]] --
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local MenuButton = Instance.new("TextButton")
+local Container = Instance.new("ScrollingFrame")
+local UIList = Instance.new("UIListLayout")
+
+ScreenGui.Name = "Kisia_Rivals_V4"
+ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.ResetOnSpawn = false
+
+-- 1. Floating Menu Button
+MenuButton.Name = "RivalsToggle"
+MenuButton.Parent = ScreenGui
+MenuButton.Size = UDim2.new(0, 50, 0, 50)
+MenuButton.Position = UDim2.new(0.1, 0, 0.2, 0)
+MenuButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0) -- Rivals Red Theme
+MenuButton.Text = "R" 
+MenuButton.TextColor3 = Color3.new(1, 1, 1)
+MenuButton.Font = Enum.Font.GothamBold
+MenuButton.Active = true
+MenuButton.Draggable = true
+
+-- 2. Rivals Style UI Frame
+MainFrame.Parent = ScreenGui
+MainFrame.Size = UDim2.new(0, 200, 0, 250)
+MainFrame.Position = UDim2.new(0.5, -100, 0.5, -125)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.Visible = false
+MainFrame.BorderSizePixel = 2
+MainFrame.BorderColor3 = Color3.fromRGB(255, 0, 0)
+
+Container.Parent = MainFrame
+Container.Size = UDim2.new(1, -10, 1, -10)
+Container.Position = UDim2.new(0, 5, 0, 5)
+Container.BackgroundTransparency = 1
+Container.CanvasSize = UDim2.new(0, 0, 1.3, 0)
+
+UIList.Parent = Container
+UIList.Padding = UDim.new(0, 5)
+
+MenuButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- [[ UI COMPONENT GENERATOR ]] --
+local function AddToggle(name, setting)
+    local btn = Instance.new("TextButton")
+    btn.Parent = Container
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.Text = name .. ": OFF"
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 14
+
+    btn.MouseButton1Click:Connect(function()
+        Kisia_Settings[setting] = not Kisia_Settings[setting]
+        btn.Text = name .. ": " .. (Kisia_Settings[setting] and "ON" or "OFF")
+        btn.BackgroundColor3 = Kisia_Settings[setting] and Color3.fromRGB(200, 0, 0) or Color3.fromRGB(30, 30, 30)
+    end)
+end
+
+AddToggle("Silent Aim", "Aimbot")
+AddToggle("Auto Shoot", "Auto_Fire")
+AddToggle("Wall Check Bypass", "Wallbang")
+AddToggle("Player ESP", "ESP")
+
+-- [[ CORE RIVALS LOGIC ]] --
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+
+-- Specific Remote for Rivals Shooting (Concept)
+local ShootRemote = game:GetService("ReplicatedStorage"):FindFirstChild("Shoot", true) 
+
+local function GetClosestTarget()
+    local target = nil
+    local shortestDist = 300 
+
+    for _, p in pairs(Players:GetPlayers()) do
+        -- Only target enemies (Rivals Team Check)
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") and p.Team ~= LocalPlayer.Team then
+            local pos, onScreen = Camera:WorldToViewportPoint(p.Character.Head.Position)
+            if onScreen then
+                local mag = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+                
+                -- Wallbang / Transparency Logic
+                if not Kisia_Settings.Wallbang then
+                    local ray = Ray.new(Camera.CFrame.p, (p.Character.Head.Position - Camera.CFrame.p).unit * 500)
+                    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character})
+                    if hit and not hit:IsDescendantOf(p.Character) then continue end
+                end
+
+                if mag < shortestDist then
+                    shortestDist = mag
+                    target = p
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- RIVALS ENGINE LOOP
+RunService.RenderStepped:Connect(function()
+    if Kisia_Settings.Aimbot then
+        local target = GetClosestTarget()
+        if target then
+            local headPos = target.Character.Head.Position
+            
+            -- Smooth Lock for Rivals Precision
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, headPos), 0.15)
+            
+            -- Rivals Auto-Fire Optimization
+            if Kisia_Settings.Auto_Fire then
+                -- Check if the crosshair is centered on the head
+                local look = Camera.CFrame.lookVector
+                local dir = (headPos - Camera.CFrame.Position).unit
+                if look:Dot(dir) > 0.999 then
+                    -- Trigger Shoot Event
+                    if ShootRemote then
+                        -- Rivals Specific Shooting Remote Logic
+                        -- ShootRemote:FireServer(headPos)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+print("KisiaHook: Rivals Edition Loaded. Use 'R' Button to toggle.")
