@@ -1,0 +1,66 @@
+-- [[ KICIAHOOK V2 : RIVALS OFFICIAL REPLICA ]]
+-- Optimized for Mobile Executors (Delta, Codex, etc.)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- [[ Kicia Premium Settings ]]
+getgenv().Kicia = {
+    SilentAim = true,
+    Wallbang = true,
+    TargetPart = "Head",
+    HitChance = 100,
+    FOV = 150
+}
+
+-- [1] Target Selection Logic (Premium Accuracy)
+local function GetClosestTarget()
+    local target, dist = nil, getgenv().Kicia.FOV
+    local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild(getgenv().Kicia.TargetPart) then
+            local part = p.Character[getgenv().Kicia.TargetPart]
+            local pos, vis = Camera:WorldToViewportPoint(part.Position)
+            
+            if pos.Z > 0 then -- Check if target is in front of screen
+                local mag = (Vector2.new(pos.X, pos.Y) - center).Magnitude
+                if mag < dist then
+                    -- If Wallbang is ON, it ignores visibility (vis)
+                    if getgenv().Kicia.Wallbang or vis then
+                        target = part
+                        dist = mag
+                    end
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- [2] The "Silent" Engine (Metamethod Hook)
+-- This is the core of Kiciahook that redirects the bullet trajectory
+local OldNamecall
+OldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
+
+    -- Rivals uses Raycast to detect hits. We hijack the 'Direction' argument.
+    if getgenv().Kicia.SilentAim and method == "Raycast" and not checkcaller() then
+        local t = GetClosestTarget()
+        if t and math.random(1, 100) <= getgenv().Kicia.HitChance then
+            -- args[1] is Origin (Gun barrel), args[2] is Direction
+            -- We change Direction to point exactly at the Target's Head
+            args[2] = (t.Position - args[1]).Unit * 1000 
+            return OldNamecall(self, unpack(args))
+        end
+    end
+
+    return OldNamecall(self, ...)
+end)
+
+-- [3] Visual Feedback (Optional)
+print("Kiciahook V2 Logic Successfully Injected")
+
