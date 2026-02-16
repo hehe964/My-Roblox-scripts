@@ -1,0 +1,56 @@
+-- [[ KISHIA HOOK PREMIUM - MODIFIED ENGLISH VERSION ]] --
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- [[ CONFIGURATION (Fly Removed) ]] --
+local PremiumConfig = {
+    Aimbot = true,
+    Noclip = true,
+    ESP = true,
+    AutoAttack = true,
+    FOV = 300,
+    TeamCheck = false
+}
+
+-- [[ UI CONSTRUCT ]] --
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Name = "KishiaPremium_Modified"
+MainFrame.Size = UDim2.new(0, 220, 0, 280)
+MainFrame.Position = UDim2.new(0.5, -110, 0.5, -140)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MainFrame.BackgroundTransparency = 0.1
+MainFrame.Active = true
+MainFrame.Draggable = true 
+MainFrame.Visible = true -- [Modified] UI shows immediately on load
+
+-- Added Title for Clarity
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Text = "KISHIA HOOK (NO FLY)"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 18
+
+-- Toggle Key (Insert)
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Insert then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
+
+-- [[ CORE FUNCTIONS ]] --
+
+-- 1. Master Noclip
+RunService.Stepped:Connect(function()
+    if PremiumConfig.Noclip and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide then
+                part.CanCollide = false
+            end
+        end
