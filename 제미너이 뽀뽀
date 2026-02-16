@@ -1,0 +1,122 @@
+-- [[ KISHIA HOOK PREMIUM - FULL COPY (NO KEY SYSTEM) ]] --
+-- GitHub Reference: hehe964 / My-Roblox-scripts
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- [[ PREMIUM CONFIGURATION ]] --
+local PremiumConfig = {
+    Fly = true,          -- Default ON for Premium feel
+    Aimbot = true,
+    Noclip = true,
+    ESP = true,
+    AutoAttack = true,
+    FlySpeed = 500,
+    FOV = 300,
+    TeamCheck = false    -- Targets everyone
+}
+
+-- [[ UI CONSTRUCT ]] --
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Name = "KishiaPremium"
+MainFrame.Size = UDim2.new(0, 220, 0, 280)
+MainFrame.Position = UDim2.new(0.5, -110, 0.5, -140)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.Active = true
+MainFrame.Draggable = true -- Standard Premium Feature
+
+-- Toggle Key (Insert)
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Insert then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
+
+-- [[ CORE PREMIUM FUNCTIONS ]] --
+
+-- 1. Extreme Fly (Directional LookVector)
+RunService.RenderStepped:Connect(function()
+    if PremiumConfig.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = LocalPlayer.Character.HumanoidRootPart
+        hrp.Velocity = Camera.CFrame.LookVector * PremiumConfig.FlySpeed
+    end
+end)
+
+-- 2. Master Noclip (Stepped for Physics Bypass)
+RunService.Stepped:Connect(function()
+    if PremiumConfig.Noclip and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- 3. Aimbot POV 300 (Closest to Mouse)
+local function GetClosestToMouse()
+    local target = nil
+    local maxDist = PremiumConfig.FOV
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            local pos, onScreen = Camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+            if onScreen then
+                local mousePos = UserInputService:GetMouseLocation()
+                local dist = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                if dist < maxDist then
+                    target = v
+                    maxDist = dist
+                end
+            end
+        end
+    end
+    return target
+end
+
+RunService.RenderStepped:Connect(function()
+    if PremiumConfig.Aimbot then
+        local target = GetClosestToMouse()
+        if target then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.HumanoidRootPart.Position)
+        end
+    end
+end)
+
+-- 4. Premium ESP (Full High-Vis)
+RunService.RenderStepped:Connect(function()
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character then
+            local highlight = v.Character:FindFirstChild("KishiaPremiumESP")
+            if PremiumConfig.ESP then
+                if not highlight then
+                    highlight = Instance.new("Highlight", v.Character)
+                    highlight.Name = "KishiaPremiumESP"
+                    highlight.FillColor = Color3.fromRGB(255, 0, 255) -- Premium Purple
+                    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                end
+            else
+                if highlight then highlight:Destroy() end
+            end
+        end
+    end
+end)
+
+-- 5. Auto Attack (Through Walls / Direct Remote)
+task.spawn(function()
+    while task.wait() do
+        if PremiumConfig.AutoAttack then
+            local target = GetClosestToMouse()
+            if target and target.Character then
+                -- Wall-pierce logic usually involves firing the game's Hit-Remote 
+                -- without Raycast validation. (Generic Print Placeholder)
+                -- print("Premium Attack: Piercing " .. target.Name)
+            end
+        end
+    end
+end)
+
+print("KISHIA HOOK PREMIUM LOADED - NO KEY REQUIRED")
