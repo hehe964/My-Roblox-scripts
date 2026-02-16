@@ -1,0 +1,121 @@
+-- [[ KICIAHOOK V2 PREMIUM REPLICA ]]
+-- Optimized for Rivals & Mobile Executors
+
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/main/Addons/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/main/Addons/InterfaceManager.lua"))()
+
+-- [[ Configuration ]]
+getgenv().KiciaConfig = {
+    SilentAim = false,
+    Wallbang = false,
+    FOV = 150,
+    HitChance = 100,
+    TargetPart = "Head",
+    ESPEnabled = false
+}
+
+local Window = Fluent:CreateWindow({
+    Title = "Kiciahook V2 | Premium Mobile",
+    SubTitle = "by Gemini",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = true,
+    Theme = "Dark"
+})
+
+local Tabs = {
+    Main = Window:AddTab({ Title = "Combat", Icon = "crosshair" }),
+    Visuals = Window:AddTab({ Title = "Visuals", Icon = "eye" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+}
+
+-- [[ Combat Tab ]]
+Tabs.Main:AddToggle("SilentAim", {Title = "Silent Aim (Magic Bullet)", Default = false}):OnChanged(function(Value)
+    getgenv().KiciaConfig.SilentAim = Value
+end)
+
+Tabs.Main:AddToggle("Wallbang", {Title = "Wallbang", Default = false}):OnChanged(function(Value)
+    getgenv().KiciaConfig.Wallbang = Value
+end)
+
+Tabs.Main:AddSlider("FOV", {
+    Title = "FOV Radius",
+    Description = "Adjust target range",
+    Default = 150,
+    Min = 0,
+    Max = 800,
+    Rounding = 1,
+    Callback = function(Value) getgenv().KiciaConfig.FOV = Value end
+})
+
+-- [[ Visuals Tab ]]
+Tabs.Visuals:AddToggle("ESP", {Title = "Highlight ESP", Default = false}):OnChanged(function(Value)
+    getgenv().KiciaConfig.ESPEnabled = Value
+end)
+
+-- [[ Backend Engine ]]
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+-- Function: Get Closest Target
+local function GetClosestTarget()
+    local target, dist = nil, getgenv().KiciaConfig.FOV
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(getgenv().KiciaConfig.TargetPart) then
+            local part = v.Character[getgenv().KiciaConfig.TargetPart]
+            local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
+            local mag = (Vector2.new(pos.X, pos.Y) - UserInputService:GetMouseLocation()).Magnitude
+            
+            if mag < dist then
+                if getgenv().KiciaConfig.Wallbang or onScreen then
+                    target = part
+                    dist = mag
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- Hooking Engine (The Premium Core)
+local OldNamecall
+OldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
+    
+    if not checkcaller() and getgenv().KiciaConfig.SilentAim and method == "Raycast" then
+        local target = GetClosestTarget()
+        if target then
+            args[2] = (target.Position - args[1]).Unit * 1000
+            return OldNamecall(self, unpack(args))
+        end
+    end
+    return OldNamecall(self, ...)
+end)
+
+-- ESP System
+RunService.Heartbeat:Connect(function()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local hl = p.Character:FindFirstChild("KiciaPremiumESP")
+            if getgenv().KiciaConfig.ESPEnabled then
+                if not hl then
+                    hl = Instance.new("Highlight", p.Character)
+                    hl.Name = "KiciaPremiumESP"
+                    hl.FillColor = Color3.fromRGB(255, 0, 0)
+                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                end
+            else
+                if hl then hl:Destroy() end
+            end
+        end
+    end
+end)
+
+Window:SelectTab(1)
+Fluent:Notify({Title = "Kiciahook V2", Content = "Premium Replica Loaded!", Duration = 5})
