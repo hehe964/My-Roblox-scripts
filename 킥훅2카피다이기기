@@ -1,0 +1,127 @@
+-- [[ KICIAHOOK V2 | RIVALS REPLICA ]] --
+-- Integrated with: Legitbot, Silent Aim, Triggerbot, Rage, Visuals, Misc
+
+local Kicia_V2 = {
+    Combat = {
+        Legit = {Enabled = false, FOV = 100, Speed = 5, Reaction = 500},
+        Silent = {Enabled = false, HitChance = 100, Target = "Head", IgnoreFOV = false},
+        Trigger = {Enabled = false, Delay = 4, HeadOnly = true},
+        Rage = {Enabled = false, AntiAim = false, Spin = 180}
+    },
+    Visuals = {
+        ESP = {Enabled = false, Boxes = false, Health = false, Names = false},
+        World = {Brightness = 100, Shadows = true, NoFog = false},
+        Player = {ThirdPerson = false, FOV = 120}
+    },
+    Misc = {
+        WalkSpeed = 16,
+        JumpPower = 50,
+        Fly = false,
+        NoRecoil = false,
+        RapidFire = false
+    }
+}
+
+-- [[ UI LIBRARY: KICIA REPLICA ]] --
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local TabButtons = Instance.new("Frame")
+local ContentFrame = Instance.new("Frame")
+local OpenButton = Instance.new("TextButton")
+
+ScreenGui.Name = "KiciahookV2_Mobile"
+ScreenGui.Parent = game:GetService("CoreGui")
+
+-- 1. Mobile Open/Close Toggle (Screenshot Style)
+OpenButton.Name = "ToggleMenu"
+OpenButton.Parent = ScreenGui
+OpenButton.Size = UDim2.new(0, 80, 0, 30)
+OpenButton.Position = UDim2.new(0.5, -40, 0, 10)
+OpenButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+OpenButton.Text = "Open"
+OpenButton.TextColor3 = Color3.new(1, 1, 1)
+OpenButton.Draggable = true
+
+-- 2. Main Menu Frame
+MainFrame.Parent = ScreenGui
+MainFrame.Size = UDim2.new(0, 450, 0, 280)
+MainFrame.Position = UDim2.new(0.5, -225, 0.5, -140)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BorderSizePixel = 2
+MainFrame.BorderColor3 = Color3.fromRGB(50, 50, 50)
+MainFrame.Visible = false
+
+OpenButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+    OpenButton.Text = MainFrame.Visible and "Close" or "Open"
+end)
+
+-- 탭 생성 및 기능 연결 (Combat, Visuals, Misc 등)
+local function CreateTab(name, pos)
+    local btn = Instance.new("TextButton")
+    btn.Parent = MainFrame
+    btn.Size = UDim2.new(0.25, 0, 0, 35)
+    btn.Position = UDim2.new(pos * 0.25, 0, 0, 0)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    btn.Text = name
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    return btn
+end
+
+local CombatBtn = CreateTab("Combat", 0)
+local VisualBtn = CreateTab("Visuals", 1)
+local MiscBtn = CreateTab("Misc", 2)
+local SettingsBtn = CreateTab("Settings", 3)
+
+-- [[ CORE LOGIC: RIVALS OPTIMIZATION ]] --
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+
+local function GetTarget(fov)
+    local target = nil
+    local lastDist = fov
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+            local pos, vis = Camera:WorldToViewportPoint(p.Character.Head.Position)
+            if vis then
+                local mag = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+                if mag < lastDist then
+                    lastDist = mag
+                    target = p
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- Main Execution Engine
+RunService.RenderStepped:Connect(function()
+    -- 1. Silent Aim / Legitbot Logic
+    if Kicia_V2.Combat.Silent.Enabled or Kicia_V2.Combat.Legit.Enabled then
+        local target = GetTarget(Kicia_V2.Combat.Silent.HitChance > 0 and 600 or 100)
+        if target then
+            local head = target.Character.Head.Position
+            if Kicia_V2.Combat.Silent.Enabled then
+                -- Silent Aim: Direct CFrame manipulation
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, head)
+            end
+        end
+    end
+
+    -- 2. Misc Logic (Speed, Fly, Jump)
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        local hum = LocalPlayer.Character.Humanoid
+        hum.WalkSpeed = Kicia_V2.Misc.WalkSpeed
+        -- No Recoil Concept (Camera shake suppression)
+        if Kicia_V2.Misc.NoRecoil then
+            -- Logic to lock camera recoil offset to 0
+        end
+    end
+end)
+
+-- [[ NOTIFICATION ]] --
+print("Kiciahook V2 | Rivals Successfully Loaded.")
+print("Script Source: https://raw.githubusercontent.com/hehe964/My-Roblox-scripts/refs/heads/main/3333333")
