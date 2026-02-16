@@ -1,0 +1,174 @@
+--[[
+    Kiciahook V2 | Rivals
+    Full UI Framework (Mobile & PC Compatible)
+    Framework: Rayfield
+]]
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Kiciahook V2 | Rivals",
+   LoadingTitle = "Kiciahook Systems",
+   LoadingSubtitle = "by Developer",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "Kiciahook_Rivals",
+      FileName = "Config"
+   },
+   KeySystem = false
+})
+
+---------------------------------------------------------
+-- 1. COMBAT TAB (Legitbot, Silent Aim, Triggerbot, Rage)
+---------------------------------------------------------
+local CombatTab = Window:CreateTab("Combat", 4483362458)
+
+-- Legitbot Section
+local LegitSection = CombatTab:CreateSection("Legitbot")
+LegitSection:CreateToggle({
+   Name = "Enabled",
+   CurrentValue = false,
+   Callback = function(Value) end,
+})
+LegitSection:CreateSlider({
+   Name = "Aimbot Speed",
+   Range = {1, 10},
+   Increment = 1,
+   CurrentValue = 5,
+   Callback = function(Value) end,
+})
+
+-- Silent Aim Section
+local SilentSection = CombatTab:CreateSection("Silent Aim")
+SilentSection:CreateToggle({
+   Name = "Silent Aim Enabled",
+   CurrentValue = false,
+   Callback = function(Value) end,
+})
+SilentSection:CreateSlider({
+   Name = "Hit Chance (%)",
+   Range = {0, 100},
+   Increment = 1,
+   CurrentValue = 100,
+   Callback = function(Value) end,
+})
+
+-- Rage Section (Anti-Aim)
+local RageSection = CombatTab:CreateSection("Rage / Anti-Aim")
+RageSection:CreateToggle({
+   Name = "Enable Anti-Aim",
+   CurrentValue = false,
+   Callback = function(Value) end,
+})
+
+---------------------------------------------------------
+-- 2. VISUALS TAB (ESP, Overrides, World, Player)
+---------------------------------------------------------
+local VisualsTab = Window:CreateTab("Visuals", 4483345998)
+
+-- ESP Section
+local ESPSection = VisualsTab:CreateSection("ESP Main")
+ESPSection:CreateToggle({
+   Name = "Enable Enemy ESP",
+   CurrentValue = false,
+   Callback = function(Value) end,
+})
+ESPSection:CreateToggle({
+   Name = "Show Box",
+   CurrentValue = false,
+   Callback = function(Value) end,
+})
+ESPSection:CreateToggle({
+   Name = "Show Health Bar",
+   CurrentValue = false,
+   Callback = function(Value) end,
+})
+
+-- World Section
+local WorldSection = VisualsTab:CreateSection("World Visuals")
+WorldSection:CreateSlider({
+   Name = "Brightness",
+   Range = {0, 200},
+   Increment = 1,
+   CurrentValue = 100,
+   Callback = function(Value)
+      game:GetService("Lighting").Brightness = Value / 100
+   end,
+})
+
+---------------------------------------------------------
+-- 3. MISC TAB (Character, Weapon, World)
+---------------------------------------------------------
+local MiscTab = Window:CreateTab("Misc", 4483362458)
+
+-- Character Section
+local CharSection = MiscTab:CreateSection("Character")
+CharSection:CreateSlider({
+   Name = "Walk Speed",
+   Range = {16, 150},
+   Increment = 1,
+   CurrentValue = 16,
+   Callback = function(Value)
+      game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+   end,
+})
+CharSection:CreateSlider({
+   Name = "Jump Power",
+   Range = {50, 250},
+   Increment = 1,
+   CurrentValue = 50,
+   Callback = function(Value)
+      game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
+   end,
+})
+CharSection:CreateToggle({
+   Name = "Enable Fly",
+   CurrentValue = false,
+   Callback = function(Value) end,
+})
+
+-- Weapon Section
+local WeaponSection = MiscTab:CreateSection("Weapon Misc")
+WeaponSection:CreateToggle({
+   Name = "Rapid Fire",
+   CurrentValue = false,
+   Callback = function(Value) end,
+})
+WeaponSection:CreateToggle({
+   Name = "No Spread",
+   CurrentValue = false,
+   Callback = function(Value) end,
+})
+
+---------------------------------------------------------
+-- 4. SETTINGS TAB
+---------------------------------------------------------
+local SettingsTab = Window:CreateTab("Settings", 4483362458)
+SettingsTab:CreateButton({
+   Name = "Destroy Menu",
+   Callback = function()
+      Rayfield:Destroy()
+   end,
+})
+
+---------------------------------------------------------
+-- MOBILE TOGGLE BUTTON
+---------------------------------------------------------
+local ScreenGui = Instance.new("ScreenGui")
+local ToggleButton = Instance.new("TextButton")
+
+ScreenGui.Parent = game:GetService("CoreGui")
+ToggleButton.Parent = ScreenGui
+ToggleButton.Name = "KiciahookToggle"
+ToggleButton.Size = UDim2.new(0, 100, 0, 40)
+ToggleButton.Position = UDim2.new(0, 50, 0, 50)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+ToggleButton.Text = "Open/Close"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.Draggable = true
+
+ToggleButton.MouseButton1Click:Connect(function()
+   -- Rayfield's visibility toggle (Default Key: RightControl)
+end)
+
+Rayfield:LoadConfiguration()
