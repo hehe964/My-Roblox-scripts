@@ -1,0 +1,34 @@
+-- [[ Rivals Hitbox Expander - Optimized for Delta Executor ]] --
+
+-- Settings
+getgenv().HitboxSize = 5 -- Recommendation: 5 to 10
+getgenv().HitboxTransparency = 0.6 -- 0 is visible, 1 is invisible
+getgenv().HitboxStatus = true -- Toggle state
+
+-- Main Loop
+task.spawn(function()
+    while getgenv().HitboxStatus do
+        for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+            -- Target only enemies (Exclude LocalPlayer)
+            if player ~= game:GetService("Players").LocalPlayer then
+                pcall(function()
+                    if player.Character and player.Character:FindFirstChild("Head") then
+                        local head = player.Character.Head
+                        
+                        -- Apply Expanded Hitbox Properties
+                        head.Size = Vector3.new(getgenv().HitboxSize, getgenv().HitboxSize, getgenv().HitboxSize)
+                        head.Transparency = getgenv().HitboxTransparency
+                        head.BrickColor = BrickColor.new("Neon Cyan") -- Light color for visibility
+                        head.Material = Enum.Material.Neon
+                        head.CanCollide = false -- Prevent physics glitches
+                    end
+                end)
+            end
+        end
+        task.wait(2) -- Interval to prevent CPU lag
+    end
+end)
+
+print("Status: Rivals Hitbox Expander is now ACTIVE.")
+print("Settings: Size [" .. getgenv().HitboxSize .. "] / Transparency [" .. getgenv().HitboxTransparency .. "]")
+
